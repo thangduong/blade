@@ -143,6 +143,7 @@ class TextIndexer(object):
 
     def add_token(self, token):
         if not token in self._vocab:
+            self._index_to_word[len(self._vocab)] = token
             self._vocab[token] = len(self._vocab)
 
     def vocab_size(self):
@@ -150,3 +151,6 @@ class TextIndexer(object):
 
     def vocab_map(self):
         return self._vocab
+
+    def index_to_word(self):
+        return self._index_to_word
