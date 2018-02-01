@@ -119,11 +119,21 @@ class ModelLogDbViewer:
 	def get_all_trainers(self):
 		if self._db is None:
 			return [],[]
+		for retry in range(3):
+			try:
+				cursor = self._db.cursor()
+				cursor.execute("SELECT * FROM [dbo].[model_training]")
+				columns = [column[0] for column in cursor.description]
+				return cursor.fetchall(), columns
+			except pyodbc.Error as e:
+				sqlstate = e.args[0]
+				if sqlstate == '08S01':
+					print("CONNECTION BROKEN!  RECONNECTING!")
+					self._db = pyodbc.connect(connection_string)
+					continue
+				raise
+		raise
 
-		cursor = self._db.cursor()
-		cursor.execute("SELECT * FROM [dbo].[model_training]")
-		columns = [column[0] for column in cursor.description]
-		return cursor.fetchall(), columns
 
 
 if __name__ == "__main__":
