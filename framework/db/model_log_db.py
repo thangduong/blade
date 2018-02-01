@@ -1,21 +1,34 @@
+import os
+os.environ['TDSDUMP'] = 'stdout'
+#import pymssql
 import pyodbc
 import socket
-import os
 
 class ModelLogDb:
 	_all_objects = []
 
 	def __init__(self):
-		self._db = pyodbc.connect("Driver={SQL Server Native Client 11.0};"
-													"Server=modelrepo.database.windows.net;"
-													"Database=model_repo;"
-													"UID=thduon;PWD=m0del_rep0;"
-															)
+		try:
+			dsn = "modelrepo"
+			user = "thduon"
+			password = "m0del_rep0"
+			db = "model_repo"
+			self._db = pyodbc.connect("Driver={ODBC Driver 13 for SQL Server};"
+														"Server=modelrepo.database.windows.net;"
+														"Database=model_repo;"
+														"UID=thduon;PWD=m0del_rep0;"
+																)
+		except Exception as e:
+			print(e)
+			print("WARNING: FAILED TO CONNECT TO DATABASE")
+			self._db = None
 		self._id = -1
 		self._done = False
 		ModelLogDb._all_objects.append(self)
 
 	def begin_training(self, model_name, output_location):
+		if self._db is None:
+			return
 		cursor = self._db.cursor()
 		training_gpu_env = ''
 		if 'CUDA_VISIBLE_DEVICES'  in os.environ:
@@ -38,6 +51,8 @@ class ModelLogDb:
 		return self._id
 
 	def update_db(self, entries):
+		if self._db is None:
+			return
 		cursor = self._db.cursor()
 		update_fields = ""
 		for key, value in entries.items():
@@ -78,7 +93,8 @@ class ModelLogDb:
 import atexit
 atexit.register(ModelLogDb._static_at_exit)
 
-db = ModelLogDb()
-params = {'model_name':'testing'}
-db.begin_training(params)
-db.done_training()
+if __name__ == "__main__":
+	db = ModelLogDb()
+	params = {'model_name':'testing'}
+	db.begin_training("mymodel","test")
+	db.done_training()

@@ -11,7 +11,7 @@ import framework.utils.common as common_utils
 import logging
 import framework.evaluator
 import framework.utils.common as utils
-import framework.db as db
+import framework.db.model_log_db as db
 from time import time
 import collections
 import numpy as np
@@ -181,7 +181,7 @@ class Trainer(object):
 			self._model_log_db = db.ModelLogDb()
 			self._model_log_db_id = self._model_log_db.begin_training(self._model_name, self._model_output_location)
 			with open(os.path.join(self._model_output_location,
-																							 'model_log_db_id.txt')) as f:
+																							 'model_log_db_id.txt'),'w') as f:
 				f.write("%s\n"%self._model_log_db_id)
 
 		self._params['stats'] = {'next_batch_time_list': collections.deque(maxlen=10),
