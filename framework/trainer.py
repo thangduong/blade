@@ -11,6 +11,7 @@ import framework.utils.common as common_utils
 import logging
 import framework.evaluator
 import framework.utils.common as utils
+import framework.db as db
 from time import time
 import collections
 import numpy as np
@@ -51,6 +52,9 @@ def _default_train_iteration_done(trainer, epoch, index, iteration_count,
 	print('%s' % msg)
 	trainer._training_log_file.write('%s\n' % msg)
 	trainer._training_log_file.flush()
+
+	if self._model_log_db is not None:
+		self._model_log_db.on_update(loss_vale, msg)
 	return False
 
 class Trainer(object):
@@ -89,6 +93,7 @@ class Trainer(object):
 		@param train_iteration_done:
 		@param optimizer_params:
 		"""
+		self._model_log_db = None
 		self._model_name = name
 		self._model_output_location = model_output_location
 		self._model_ckpt_filename = os.path.join(self._model_output_location, self._model_name + CHECKPOINT_FILE_EXTENSION)
@@ -156,7 +161,8 @@ class Trainer(object):
 	def run(self, num_iterations=None,  num_epochs=None, restore_latest_ckpt=True,
 			save_ckpt=True, mini_batches_between_checkpoint=1000, save_network=True,
 			additional_nodes_to_evaluate=None, on_checkpoint_saved=None,
-			mini_batches_between_sanity_check=25):
+			mini_batches_between_sanity_check=25,
+			log_to_db=True):
 		"""
 		Run the training loop.
 
@@ -171,6 +177,10 @@ class Trainer(object):
 		@return:
 		 None
 		"""
+		if log_to_db:
+			self._model_log_db = db.ModelLogDb()
+			self._model_log_db.begin_training(self._model_name, self._model_output_location)
+
 		self._params['stats'] = {'next_batch_time_list': collections.deque(maxlen=10),
 								 'training_time_list': collections.deque(maxlen=10),
 								 'overhead_time_list': collections.deque(maxlen=10) }
@@ -272,7 +282,11 @@ class Trainer(object):
 						save_path = self._saver.save(self._session, self._model_ckpt_filename)
 						if on_checkpoint_saved is not None:
 							on_checkpoint_saved(self, self._params, save_path)
-	
+							if self._model_log_db is not None:
+								self._model_log_db.on_checkpoint_saved(save_path)
+		if self._model_log_db is not None:
+			self._model_log_db.done_training()
+
 	def test_batch(self, data_batch, nodes_to_evaluate):
 		"""
 		Default function to handle a single train iteration
