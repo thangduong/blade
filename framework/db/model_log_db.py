@@ -14,7 +14,7 @@ class ModelLogDbWriter:
 
 	def __init__(self):
 		try:
-			self._db = pyodbc.connect(connetion_string)
+			self._db = pyodbc.connect(connection_string)
 		except Exception as e:
 			print(e)
 			print("WARNING: FAILED TO CONNECT TO DATABASE")
