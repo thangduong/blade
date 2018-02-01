@@ -1,7 +1,10 @@
 import os
 import time
-import pyodbc
 import socket
+try:
+	import pyodbc
+except:
+	print("FAILED TO IMPORT PYODBC.  INSTALL PYODBC FOR LOGGING!")
 
 connection_string = "Driver={ODBC Driver 13 for SQL Server};" \
 										"Server=modelrepo.database.windows.net;" \
