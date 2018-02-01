@@ -1,6 +1,5 @@
 import os
-os.environ['TDSDUMP'] = 'stdout'
-#import pymssql
+import time
 import pyodbc
 import socket
 
@@ -38,10 +37,10 @@ class ModelLogDb:
 		pid = os.getpid()
 		public_ip = os.popen('curl ifconfig.me -s').read().rstrip().lstrip()
 		sql = "INSERT INTO [dbo].[model_training] " \
-		"([model_name], [training_start], [training_host], [training_gpu_env], [training_pid], [training_host_ip], [training_state], [output_location]) " \
+		"([model_name], [training_start], [training_host], [training_gpu_env], [training_pid], [training_host_ip], [training_state], [output_location],[training_start_time_epoch]) " \
 		" VALUES " \
-					"('%s',CURRENT_TIMESTAMP,'%s','%s',%s,'%s',0,'%s')" \
-					%(model_name, training_host, training_gpu_env, pid, public_ip, output_location)
+					"('%s',CURRENT_TIMESTAMP,'%s','%s',%s,'%s',0,'%s',%s)" \
+					%(model_name, training_host, training_gpu_env, pid, public_ip, output_location,time.time())
 		cursor.execute(sql)
 		self._db.commit()
 
@@ -50,10 +49,14 @@ class ModelLogDb:
 		self._id = row[0]
 		return self._id
 
+	def set_training_state(self, state):
+		self.update_db({'training_state':state,'training_state_change_time':'CURRENT_TIMESTAMP'})
+
 	def update_db(self, entries):
 		if self._db is None:
 			return
 		cursor = self._db.cursor()
+		entries['last_update_time_epoch'] = time.time()
 		update_fields = ""
 		for key, value in entries.items():
 			if len(update_fields) > 0:
@@ -63,12 +66,12 @@ class ModelLogDb:
 			else:
 				update_fields += "%s=%s"%(key,value)
 		sql = "update [dbo].[model_training] SET %s WHERE id=%s"%(update_fields,self._id)
-		print(sql)
 		cursor.execute(sql)
 		self._db.commit()
 
-	def on_update(self, loss, log_line):
-		self.update_db({'last_loss':loss, 'last_training_log_line':log_line,'last_update':'CURRENT_TIMESTAMP'})
+	def on_update(self, epoch, minibatch, iteration_count, loss, log_line):
+		self.update_db({'epoch':epoch,'minibatch':minibatch, 'iteration_count':iteration_count,
+										'last_loss':loss, 'last_training_log_line':log_line,'last_update':'CURRENT_TIMESTAMP'})
 
 	def done_training(self):
 		self.update_db({'training_state':10,'training_state_change_time':'CURRENT_TIMESTAMP'})
@@ -98,3 +101,42 @@ if __name__ == "__main__":
 	params = {'model_name':'testing'}
 	db.begin_training("mymodel","test")
 	db.done_training()
+
+
+
+	"""
+	/****** Object:  Table [dbo].[model_training]    Script Date: 1/31/2018 8:32:39 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [dbo].[model_training](
+	[id] [int] IDENTITY(0,1) NOT NULL,
+	[model_name] [varchar](max) NULL,
+	[training_start] [datetime] NULL,
+	[training_host] [varchar](max) NULL,
+	[training_host_ip] [varchar](max) NULL,
+	[training_gpu_env] [varchar](max) NULL,
+	[last_checkpoint_time] [datetime] NULL,
+	[training_pid] [int] NULL,
+	[last_update] [datetime] NULL,
+	[last_loss] [float] NULL,
+	[last_training_log_line] [varchar](max) NULL,
+	[training_should_stop] [int] NULL,
+	[training_state] [int] NULL,
+	[training_state_change_time] [datetime] NULL,
+	[output_location] [varchar](max) NULL,
+	[epoch] [int] NULL,
+	[minibatch] [int] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+
+
+
+	"""

@@ -53,8 +53,8 @@ def _default_train_iteration_done(trainer, epoch, index, iteration_count,
 	trainer._training_log_file.write('%s\n' % msg)
 	trainer._training_log_file.flush()
 
-	if self._model_log_db is not None:
-		self._model_log_db.on_update(loss_vale, msg)
+	if trainer._model_log_db is not None:
+		trainer._model_log_db.on_update(epoch, index, iteration_count, loss_value, msg)
 	return False
 
 class Trainer(object):
@@ -75,7 +75,8 @@ class Trainer(object):
 				 batch_size=128, data_map=None, name='model',
 				 model_output_location='/tmp', optimizer=None,
 				 train_iteration=None, train_iteration_done=_default_train_iteration_done,
-				 params=None):
+				 params=None,
+							 log_to_db=True):
 		"""
 		Constructor for the trainer class
 
@@ -105,6 +106,12 @@ class Trainer(object):
 		self._params = common_utils.extend_dict(params, default_params)
 		self._train_iteration_done = train_iteration_done
 		self._model_graph_def = None
+		if log_to_db:
+			self._model_log_db = db.ModelLogDb()
+			self._model_log_db_id = self._model_log_db.begin_training(self._model_name, self._model_output_location)
+			with open(os.path.join(self._model_output_location,
+																							 'model_log_db_id.txt'),'w') as f:
+				f.write("%s\n"%self._model_log_db_id)
 		if loss:
 			self._loss = loss
 		else:
@@ -161,8 +168,7 @@ class Trainer(object):
 	def run(self, num_iterations=None,  num_epochs=None, restore_latest_ckpt=True,
 			save_ckpt=True, mini_batches_between_checkpoint=1000, save_network=True,
 			additional_nodes_to_evaluate=None, on_checkpoint_saved=None,
-			mini_batches_between_sanity_check=25,
-			log_to_db=True):
+			mini_batches_between_sanity_check=25):
 		"""
 		Run the training loop.
 
@@ -177,12 +183,8 @@ class Trainer(object):
 		@return:
 		 None
 		"""
-		if log_to_db:
-			self._model_log_db = db.ModelLogDb()
-			self._model_log_db_id = self._model_log_db.begin_training(self._model_name, self._model_output_location)
-			with open(os.path.join(self._model_output_location,
-																							 'model_log_db_id.txt'),'w') as f:
-				f.write("%s\n"%self._model_log_db_id)
+		if self._model_log_db is not None:
+			self._model_log_db.set_training_state(1)
 
 		self._params['stats'] = {'next_batch_time_list': collections.deque(maxlen=10),
 								 'training_time_list': collections.deque(maxlen=10),
