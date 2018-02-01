@@ -3,27 +3,25 @@ import time
 import pyodbc
 import socket
 
-class ModelLogDb:
+connection_string = "Driver={ODBC Driver 13 for SQL Server};" \
+										"Server=modelrepo.database.windows.net;" \
+										"Database=model_repo;" \
+										"UID=thduon;PWD=m0del_rep0;"
+
+
+class ModelLogDbWriter:
 	_all_objects = []
 
 	def __init__(self):
 		try:
-			dsn = "modelrepo"
-			user = "thduon"
-			password = "m0del_rep0"
-			db = "model_repo"
-			self._db = pyodbc.connect("Driver={ODBC Driver 13 for SQL Server};"
-														"Server=modelrepo.database.windows.net;"
-														"Database=model_repo;"
-														"UID=thduon;PWD=m0del_rep0;"
-																)
+			self._db = pyodbc.connect(connetion_string)
 		except Exception as e:
 			print(e)
 			print("WARNING: FAILED TO CONNECT TO DATABASE")
 			self._db = None
 		self._id = -1
 		self._done = False
-		ModelLogDb._all_objects.append(self)
+		ModelLogDbWriter._all_objects.append(self)
 
 	def begin_training(self, model_name, output_location):
 		if self._db is None:
@@ -78,7 +76,7 @@ class ModelLogDb:
 		self._done = True
 
 	def __del__(self):
-		ModelLogDb._all_objects.remove(self)
+		ModelLogDbWriter._all_objects.remove(self)
 
 	def on_checkpoint_saved(self, save_path):
 		self.update_db({'last_checkpoint_time':'CURRENT_TIMESTAMP'})
@@ -90,14 +88,35 @@ class ModelLogDb:
 
 	@staticmethod
 	def _static_at_exit():
-		for o in ModelLogDb._all_objects:
+		for o in ModelLogDbWriter._all_objects:
 			o._at_exit()
 
 import atexit
-atexit.register(ModelLogDb._static_at_exit)
+atexit.register(ModelLogDbWriter._static_at_exit)
+
+
+
+class ModelLogDbViewer:
+	def __init__(self):
+		try:
+			self._db = pyodbc.connect(connection_string)
+		except Exception as e:
+			print(e)
+			print("WARNING: FAILED TO CONNECT TO DATABASE")
+			self._db = None
+
+	def get_all_trainers(self):
+		if self._db is None:
+			return [],[]
+
+		cursor = self._db.cursor()
+		cursor.execute("SELECT * FROM [dbo].[model_training]")
+		columns = [column[0] for column in cursor.description]
+		return cursor.fetchall(), columns
+
 
 if __name__ == "__main__":
-	db = ModelLogDb()
+	db = ModelLogDbWriter()
 	params = {'model_name':'testing'}
 	db.begin_training("mymodel","test")
 	db.done_training()

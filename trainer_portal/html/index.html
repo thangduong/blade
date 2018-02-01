@@ -1,0 +1,82 @@
+<html>
+<head>
+    <style>
+  .header{background-color: gray;}
+</style>
+<script>
+var cols_to_use = ["id", "model_name", "training_state", "training_host", "training_gpu_env", "training_pid", "last_update", "last_loss"];
+var cols = [];
+var idmap = new Map();
+
+function update_jobs_from_data(jobs_data) {
+    var colnames = jobs_data['colnames'];
+    var data = jobs_data['data'];
+    var table = document.getElementById("jobs_table");
+    if (table.rows.length == 0) {
+        var hdr = table.insertRow(-1);
+        hdr.className = "header";
+        for (i = 0; i < colnames.length; i++) {
+            if (cols_to_use.includes(colnames[i]))
+            {
+                cols.push(i);
+                var cell = hdr.insertCell(-1);
+                cell.appendChild(document.createTextNode(colnames[i]));
+             }
+        }
+    }
+    for (i = 0; i < data.length; i++) {
+        var data_row = data[i];
+        var id = data_row[0];
+
+        if (idmap.has(id.toString())) {
+            var row = idmap.get(id.toString());
+            for (j = 0; j < cols.length; j++) {
+                var cell = row.cells[j];
+                cell.innerHTML = data[i][cols[j]];
+            }
+        } else {
+            var row = table.insertRow(-1);
+            idmap.set(id.toString(), row);
+
+            for (j = 0; j < cols.length; j++) {
+                var cell = row.insertCell(-1);
+                cell.appendChild(document.createTextNode(data_row[cols[j]]));
+            }
+        }
+    }
+}
+function create_jobs_table() {
+    var xmlhttp = new XMLHttpRequest();
+
+    xmlhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            var jobs_data = JSON.parse(this.responseText);
+            update_jobs_from_data(jobs_data);
+            setInterval(update_jobs_table, 500);
+        }
+    };
+    xmlhttp.open("GET", "/jobs", true);
+    xmlhttp.send();
+
+}
+function update_jobs_table() {
+    var xmlhttp = new XMLHttpRequest();
+
+    xmlhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            var jobs_data = JSON.parse(this.responseText);
+            update_jobs_from_data(jobs_data);
+        }
+    };
+    xmlhttp.open("GET", "/jobs", true);
+    xmlhttp.send();
+}
+window.onload = create_jobs_table;
+</script>
+</head>
+<body>
+<table id="jobs_table" border="1">
+
+</table>
+</body>
+</html>

@@ -107,7 +107,7 @@ class Trainer(object):
 		self._train_iteration_done = train_iteration_done
 		self._model_graph_def = None
 		if log_to_db:
-			self._model_log_db = db.ModelLogDb()
+			self._model_log_db = db.ModelLogDbWriter()
 			self._model_log_db_id = self._model_log_db.begin_training(self._model_name, self._model_output_location)
 			with open(os.path.join(self._model_output_location,
 																							 'model_log_db_id.txt'),'w') as f:
