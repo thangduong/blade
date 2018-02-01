@@ -179,7 +179,10 @@ class Trainer(object):
 		"""
 		if log_to_db:
 			self._model_log_db = db.ModelLogDb()
-			self._model_log_db.begin_training(self._model_name, self._model_output_location)
+			self._model_log_db_id = self._model_log_db.begin_training(self._model_name, self._model_output_location)
+			with open(os.path.join(self._model_output_location,
+																							 'model_log_db_id.txt')) as f:
+				f.write("%s\n"%self._model_log_db_id)
 
 		self._params['stats'] = {'next_batch_time_list': collections.deque(maxlen=10),
 								 'training_time_list': collections.deque(maxlen=10),
