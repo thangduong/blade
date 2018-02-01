@@ -69,8 +69,10 @@ class ModelLogDbWriter:
 				cursor.execute(sql)
 				self._db.commit()
 				return
-			except Exception as e:
-				if is_connection_broken_error(e):
+			except pyodbc.Error as e:
+				sqlstate = e.args[0]
+				if sqlstate == '08S01':
+					print("CONNECTION BROKEN!  RECONNECTING!")
 					self._db = pyodbc.connect(connection_string)
 					continue
 				raise
