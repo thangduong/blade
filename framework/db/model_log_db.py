@@ -14,7 +14,7 @@ class ModelLogDbWriter:
 
 	def __init__(self):
 		try:
-			self._db = pyodbc.connect(connetion_string)
+			self._db = pyodbc.connect(connection_string)
 		except Exception as e:
 			print(e)
 			print("WARNING: FAILED TO CONNECT TO DATABASE")
@@ -53,19 +53,28 @@ class ModelLogDbWriter:
 	def update_db(self, entries):
 		if self._db is None:
 			return
-		cursor = self._db.cursor()
-		entries['last_update_time_epoch'] = time.time()
-		update_fields = ""
-		for key, value in entries.items():
-			if len(update_fields) > 0:
-				update_fields += ","
-			if isinstance(value,str) and not(value=="CURRENT_TIMESTAMP"):
-				update_fields += "%s='%s'"%(key,value)
-			else:
-				update_fields += "%s=%s"%(key,value)
-		sql = "update [dbo].[model_training] SET %s WHERE id=%s"%(update_fields,self._id)
-		cursor.execute(sql)
-		self._db.commit()
+		for retry in range(3):
+			try:
+				cursor = self._db.cursor()
+				entries['last_update_time_epoch'] = time.time()
+				update_fields = ""
+				for key, value in entries.items():
+					if len(update_fields) > 0:
+						update_fields += ","
+					if isinstance(value,str) and not(value=="CURRENT_TIMESTAMP"):
+						update_fields += "%s='%s'"%(key,value)
+					else:
+						update_fields += "%s=%s"%(key,value)
+				sql = "update [dbo].[model_training] SET %s WHERE id=%s"%(update_fields,self._id)
+				cursor.execute(sql)
+				self._db.commit()
+				return
+			except Exception as e:
+				if is_connection_broken_error(e):
+					self._db = pyodbc.connect(connection_string)
+					continue
+				raise
+		raise
 
 	def on_update(self, epoch, minibatch, iteration_count, loss, log_line):
 		self.update_db({'epoch':epoch,'minibatch':minibatch, 'iteration_count':iteration_count,
