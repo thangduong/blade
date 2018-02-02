@@ -76,6 +76,10 @@ class ModelLogDbWriter:
 					self._db = pyodbc.connect(connection_string)
 					continue
 				raise
+			except:
+				print("Exception")
+				print("SQL: %s"%sql)
+				continue
 		raise
 
 	def on_update(self, epoch, minibatch, iteration_count, loss, log_line):
@@ -132,6 +136,10 @@ class ModelLogDbViewer:
 					self._db = pyodbc.connect(connection_string)
 					continue
 				raise
+			except:
+				print("Exception")
+				print("SQL: %s"%sql)
+				continue
 		raise
 
 
