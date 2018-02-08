@@ -15,19 +15,26 @@ connection_string = "Driver={ODBC Driver 13 for SQL Server};" \
 class ModelLogDbWriter:
 	_all_objects = []
 
+	def connect(constr):
+		for retry in range(3):
+			try:
+				self._db = pyodbc.connect(constr)
+				return
+			except Exception as e:
+				print(e)
+				print("WARNING: FAILED TO CONNECT TO DATABASE")
+				self._db = None
+				continue
+
 	def __init__(self):
-		try:
-			self._db = pyodbc.connect(connection_string)
-		except Exception as e:
-			print(e)
-			print("WARNING: FAILED TO CONNECT TO DATABASE")
-			self._db = None
+		connect(connect_string)
 		self._id = -1
 		self._done = False
 		ModelLogDbWriter._all_objects.append(self)
 
 	def begin_training(self, model_name, output_location):
 		if self._db is None:
+			connect(connect_string)
 			return
 		cursor = self._db.cursor()
 		training_gpu_env = ''
@@ -55,6 +62,7 @@ class ModelLogDbWriter:
 
 	def update_db(self, entries):
 		if self._db is None:
+			connect(connect_string)
 			return
 		for retry in range(3):
 			try:
@@ -83,7 +91,6 @@ class ModelLogDbWriter:
 				print("Exception")
 				print("SQL: %s"%sql)
 				continue
-#		raise
 
 	def on_update(self, epoch, minibatch, iteration_count, loss, log_line):
 		self.update_db({'epoch':epoch,'minibatch':minibatch, 'iteration_count':iteration_count,
@@ -115,16 +122,24 @@ atexit.register(ModelLogDbWriter._static_at_exit)
 
 
 class ModelLogDbViewer:
+
+	def connect(constr):
+		for retry in range(3):
+			try:
+				self._db = pyodbc.connect(constr)
+				return
+			except Exception as e:
+				print(e)
+				print("WARNING: FAILED TO CONNECT TO DATABASE")
+				self._db = None
+				continue
+
 	def __init__(self):
-		try:
-			self._db = pyodbc.connect(connection_string)
-		except Exception as e:
-			print(e)
-			print("WARNING: FAILED TO CONNECT TO DATABASE")
-			self._db = None
+		connect(connect_string)
 
 	def get_all_trainers(self):
 		if self._db is None:
+			connect(connect_string)
 			return [],[]
 		for retry in range(3):
 			try:
@@ -138,13 +153,11 @@ class ModelLogDbViewer:
 					print("CONNECTION BROKEN!  RECONNECTING!")
 					self._db = pyodbc.connect(connection_string)
 					continue
-#				raise
 				continue
 			except:
 				print("Exception")
 				print("SQL: %s"%sql)
 				continue
-#		raise
 
 
 
