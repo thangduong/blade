@@ -78,12 +78,12 @@ class ModelLogDbWriter:
 					print("CONNECTION BROKEN!  RECONNECTING!")
 					self._db = pyodbc.connect(connection_string)
 					continue
-				raise
+				continue
 			except:
 				print("Exception")
 				print("SQL: %s"%sql)
 				continue
-		raise
+#		raise
 
 	def on_update(self, epoch, minibatch, iteration_count, loss, log_line):
 		self.update_db({'epoch':epoch,'minibatch':minibatch, 'iteration_count':iteration_count,
@@ -138,12 +138,13 @@ class ModelLogDbViewer:
 					print("CONNECTION BROKEN!  RECONNECTING!")
 					self._db = pyodbc.connect(connection_string)
 					continue
-				raise
+#				raise
+				continue
 			except:
 				print("Exception")
 				print("SQL: %s"%sql)
 				continue
-		raise
+#		raise
 
 
 
