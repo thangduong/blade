@@ -15,7 +15,7 @@ connection_string = "Driver={ODBC Driver 13 for SQL Server};" \
 class ModelLogDbWriter:
 	_all_objects = []
 
-	def connect(constr):
+	def connect(self, constr):
 		for retry in range(3):
 			try:
 				self._db = pyodbc.connect(constr)
@@ -26,15 +26,15 @@ class ModelLogDbWriter:
 				self._db = None
 				continue
 
-	def __init__(self):
-		connect(connection_string)
+	def __init__(self, con_string = connection_string):
+		self._connection_string = con_string
+		self.connect(self._connection_string)
 		self._id = -1
-		self._done = False
 		ModelLogDbWriter._all_objects.append(self)
 
 	def begin_training(self, model_name, output_location):
 		if self._db is None:
-			connect(connection_string)
+			self.connect(self._connection_string)
 			return
 		cursor = self._db.cursor()
 		training_gpu_env = ''
@@ -62,7 +62,7 @@ class ModelLogDbWriter:
 
 	def update_db(self, entries):
 		if self._db is None:
-			connect(connection_string)
+			self.connect(self._connection_string)
 			return
 		for retry in range(3):
 			try:
@@ -84,7 +84,7 @@ class ModelLogDbWriter:
 				sqlstate = e.args[0]
 				if sqlstate == '08S01':
 					print("CONNECTION BROKEN!  RECONNECTING!")
-					self._db = pyodbc.connect(connection_string)
+					self.connect(self._connection_string)
 					continue
 				continue
 			except:
@@ -123,7 +123,7 @@ atexit.register(ModelLogDbWriter._static_at_exit)
 
 class ModelLogDbViewer:
 
-	def connect(constr):
+	def connect(self, constr):
 		for retry in range(3):
 			try:
 				self._db = pyodbc.connect(constr)
@@ -134,12 +134,13 @@ class ModelLogDbViewer:
 				self._db = None
 				continue
 
-	def __init__(self):
-		connect(connection_string)
+	def __init__(self, con_string = connection_string):
+		self._connection_string = con_string
+		self.connect(self._connection_string)
 
 	def get_all_trainers(self):
 		if self._db is None:
-			connect(connection_string)
+			self.connect(self._connection_string)
 			return [],[]
 		for retry in range(3):
 			try:
@@ -151,7 +152,7 @@ class ModelLogDbViewer:
 				sqlstate = e.args[0]
 				if sqlstate == '08S01':
 					print("CONNECTION BROKEN!  RECONNECTING!")
-					self._db = pyodbc.connect(connection_string)
+					self.connect(self._connection_string)
 					continue
 				continue
 			except:
