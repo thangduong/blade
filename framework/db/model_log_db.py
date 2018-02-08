@@ -27,14 +27,14 @@ class ModelLogDbWriter:
 				continue
 
 	def __init__(self):
-		connect(connect_string)
+		connect(connection_string)
 		self._id = -1
 		self._done = False
 		ModelLogDbWriter._all_objects.append(self)
 
 	def begin_training(self, model_name, output_location):
 		if self._db is None:
-			connect(connect_string)
+			connect(connection_string)
 			return
 		cursor = self._db.cursor()
 		training_gpu_env = ''
@@ -62,7 +62,7 @@ class ModelLogDbWriter:
 
 	def update_db(self, entries):
 		if self._db is None:
-			connect(connect_string)
+			connect(connection_string)
 			return
 		for retry in range(3):
 			try:
@@ -135,11 +135,11 @@ class ModelLogDbViewer:
 				continue
 
 	def __init__(self):
-		connect(connect_string)
+		connect(connection_string)
 
 	def get_all_trainers(self):
 		if self._db is None:
-			connect(connect_string)
+			connect(connection_string)
 			return [],[]
 		for retry in range(3):
 			try:
