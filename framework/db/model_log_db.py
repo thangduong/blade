@@ -30,6 +30,7 @@ class ModelLogDbWriter:
 		self._connection_string = con_string
 		self.connect(self._connection_string)
 		self._id = -1
+		self._done = true
 		ModelLogDbWriter._all_objects.append(self)
 
 	def begin_training(self, model_name, output_location):
@@ -50,6 +51,7 @@ class ModelLogDbWriter:
 					"('%s',CURRENT_TIMESTAMP,'%s','%s',%s,'%s',0,'%s',%s)" \
 					%(model_name, training_host, training_gpu_env, pid, public_ip, output_location,time.time())
 		cursor.execute(sql)
+		self._done = False
 		self._db.commit()
 
 		cursor.execute("SELECT SCOPE_IDENTITY()")
