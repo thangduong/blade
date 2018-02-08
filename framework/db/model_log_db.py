@@ -30,7 +30,7 @@ class ModelLogDbWriter:
 		self._connection_string = con_string
 		self.connect(self._connection_string)
 		self._id = -1
-		self._done = true
+		self._done = True
 		ModelLogDbWriter._all_objects.append(self)
 
 	def begin_training(self, model_name, output_location):
