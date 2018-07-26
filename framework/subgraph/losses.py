@@ -17,7 +17,7 @@ def contrastive(network, name='contrastive_loss', params=None):
     @return:
     #label, margin, y_weight=1,l2_name=None, l2_norm_name=None, loss_name=None, params=None
     """
-    assert(isinstance(network, list) and (len(network)==3), 'losses.contrastive: input must contain 3 nodes')
+#    assert(isinstance(network, list) and (len(network)==3), 'losses.contrastive: input must contain 3 nodes')
     with tf.variable_scope(name):
         margin = common_utils.get_dict_value(params, 'contrastive_loss_margin', 128)
         l2_name = common_utils.get_dict_value(params, 'l2_name', 'l2')

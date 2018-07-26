@@ -91,3 +91,29 @@ def input_data(shape, name, dtype=tf.float32):
     return [tf.placeholder(shape=shape, dtype=dtype, name=name)], {}
 
 #def embedding(in_nodes, in_vars = {}):
+
+def bn(in_nodes, keep_probs, name="bn"):
+    """
+    Create a dropout TF node for every in_nodes with the corresponding keep prob.
+    The drop out is automatically gated by the "is_training" placeholder.  If "is_training" is false,
+    then keep_prop is automatically set to 1.0.
+
+    @param in_nodes:
+    @param keep_probs:
+    @param name:
+    @return:
+    A list of TF nodes
+    """
+
+    with tf.variable_scope(name):
+        # if a single number input, then make it a list of the same number
+        if not isinstance(keep_probs, list):
+            keep_probs = [keep_probs] * len(in_nodes)
+
+        is_training = tf.get_default_graph().get_tensor_by_name('is_training:0')
+        out_nodes = []
+        for in_node, keep_prob in zip(in_nodes, keep_probs):
+#            keep_prop_tensor = tf.cond(is_training, lambda: tf.constant(keep_prob), lambda: tf.constant(1.0))
+#            out_nodes.append(tf.nn.dropout(in_node, keep_prop_tensor))
+             out_nodes.append(tf.cond(is_training, lambda:tf.nn.dropout(in_node, keep_prob), lambda:in_node))
+        return out_nodes, {}

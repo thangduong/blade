@@ -87,11 +87,6 @@ def conv_2d(in_nodes, nb_filter, filter_size, strides=1, padding='same',
 
     return [out_node], out_vars
 
-def max_pool_2d(in_nodes, kernel_size, strides=None, padding='same', name="max_pool_2d"):
-    kernel_size = utils.autoformat_kernel_2d(kernel_size)
-    strides = utils.autoformat_kernel_2d(strides) if strides else kernel
-    padding = utils.autoformat_padding(padding)
+def max_pool_2d(in_nodes, kernel_size, strides, padding='SAME', name="max_pool_2d"):
     out_node = tf.nn.max_pool(in_nodes[0], kernel_size, strides, padding, name=name)
     return [out_node], {}
-
-def conv_1d(in_nodes, )

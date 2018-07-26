@@ -11,7 +11,6 @@ import framework.utils.common as common_utils
 import logging
 import framework.evaluator
 import framework.utils.common as utils
-import framework.db.model_log_db as db
 from time import time
 import collections
 import numpy as np
@@ -107,6 +106,7 @@ class Trainer(object):
 		self._train_iteration_done = train_iteration_done
 		self._model_graph_def = None
 		if log_to_db:
+			import framework.db.model_log_db as db
 			self._model_log_db = db.ModelLogDbWriter()
 			self._model_log_db_id = self._model_log_db.begin_training(self._model_name, self._model_output_location)
 			with open(os.path.join(self._model_output_location,
