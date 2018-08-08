@@ -30,7 +30,8 @@ for src_file in release_files:
 
 copy2repo = 'python3 %s/copy2repo.py --paramsfile %s --release_dir_name %s'%(script_path, os.path.join(model_dirname,'params.py'), release_dir_name)
 
-cmds = [freeze_cmd, vocab_cmd, params_cmd] + release_cmds + [keywords_cmd, copy2repo]
+cmds = [freeze_cmd, params_cmd] + release_cmds
+#cmds = [freeze_cmd, vocab_cmd, params_cmd] + release_cmds + [keywords_cmd, copy2repo]
 for c in cmds:
 	if len(c)>0:
 		print("EXECUTING: %s"%c)

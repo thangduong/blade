@@ -213,4 +213,10 @@ def weighted_softmax_xentropy(network, params):
 
 def l2_loss(network, params):
     labels = tf.placeholder(tf.float32, [None], name='y')
-    return [tf.nn.l2_loss(tf.subtract(network[0], labels))]
+    loss_sum = tf.nn.l2_loss(tf.subtract(network[0], labels))
+    loss = tf.divide(loss_sum, tf.cast(tf.shape(network[0])[0],tf.float32))
+    return [loss]
+
+def mse(network, params):
+    labels = tf.placeholder(tf.float32, [None], name='y')
+    return [tf.losses.mean_squared_error(tf.squeeze(network[0]), labels)]

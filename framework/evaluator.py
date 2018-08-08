@@ -148,7 +148,7 @@ class Evaluator(object):
                 trainable_variable_names = [v.name for v in tf.trainable_variables()]
                 for variable in tf.global_variables():
                     print(variable.get_shape())
-                    mb_size = np.prod([float(i) for i in variable.get_shape().as_list()]) / (1024 * 1024)
+                    mb_size = np.prod([float(i) for i in variable.get_shape().as_list()]) / (1024)
                     total_mp_size += mb_size
                     output_row = [variable.name, str(variable.get_shape()), "{0:.2f}".format(mb_size),
                                   "{0:.2f}".format(total_mp_size), str(variable.name in trainable_variable_names)]
