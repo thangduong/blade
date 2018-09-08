@@ -90,3 +90,6 @@ def conv_2d(in_nodes, nb_filter, filter_size, strides=1, padding='same',
 def max_pool_2d(in_nodes, kernel_size, strides, padding='SAME', name="max_pool_2d"):
     out_node = tf.nn.max_pool(in_nodes[0], kernel_size, strides, padding, name=name)
     return [out_node], {}
+
+
+

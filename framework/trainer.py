@@ -37,7 +37,8 @@ def _default_train_iteration_done(trainer, epoch, index, iteration_count,
 
 	if iteration_count == 1:
 			trainer._training_log_file = open(os.path.join(utils.get_dict_value(params, 'output_location'), 'training_log.txt'), 'w')
-
+			trainer._training_log_file.write("%s,%s,%s,%s,%s,%s,%s,%s\n"%
+											 ('epoch','iteration','time','loss','next_batch_time','training_time','overhead_time','efficiency'))
 
 	msg = ("%02d, %04d, %s, %s, %0.4f, %0.5f, %0.5f, %0.5f" %
 				 (epoch, iteration_count, time(), loss_value, next_batch_time,

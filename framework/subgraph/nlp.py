@@ -77,7 +77,7 @@ def conv2d_array(input, sizes, widths, heights, keep_probs=None, w_wds=0.005, b_
   return out
 
 
-def conv1d_array(input, sizes, widths, keep_probs=None, w_wds=0.005, b_wds=0.000,
+def conv1d_array(input, sizes, widths, strides=None,  keep_probs=None, w_wds=0.005, b_wds=0.000,
                w_initializers=tf.truncated_normal_initializer(stddev=0.05),
                b_initializers=tf.truncated_normal_initializer(stddev=0.05),
                name="conv1d_array",
@@ -88,11 +88,14 @@ def conv1d_array(input, sizes, widths, keep_probs=None, w_wds=0.005, b_wds=0.000
   w_initializer_list = expand_list(w_initializers, sizes)
   b_initializer_list = expand_list(b_initializers, sizes)
   input_size = input.get_shape().as_list()[-1]
-  print('conv1d_array: embedding_dimension = ' + str(input_size))
+  if strides is None:
+    strides = 1
+  strides = expand_list(strides,sizes)
+#  print('conv1d_array: embedding_dimension = ' + str(input_size))
   out = input
   with tf.variable_scope(name):
-    for i, (width, size, w_wd, b_wd, keep_prob, w_initializer, b_initializer) in enumerate(
-            zip(widths, sizes, w_wd_list, b_wd_list, keep_prob_list, w_initializer_list, b_initializer_list)):
+    for i, (width, size, w_wd, b_wd, keep_prob, w_initializer, b_initializer, stride) in enumerate(
+            zip(widths, sizes, w_wd_list, b_wd_list, keep_prob_list, w_initializer_list, b_initializer_list, strides)):
       with tf.variable_scope('conv%s' % str(i)) as scope:
         w = variable_with_weight_decay('w', [width, input_size, size],
                                        initializer=w_initializer, wd=w_wd,vlist=vlistin)
@@ -102,7 +105,8 @@ def conv1d_array(input, sizes, widths, keep_probs=None, w_wds=0.005, b_wds=0.000
                                        initializer=b_initializer, wd=b_wd,vlist=vlistin)
         if vlistout is not None:
           vlistout.append(b)
-        w_out = tf.nn.conv1d(input, w, 1, 'SAME')
+        print(w)
+        w_out = tf.nn.conv1d(input, w, stride, 'SAME')
         b_out = tf.nn.bias_add(w_out, b)
         out = tf.nn.relu(b_out)
         if keep_prob is not None and keep_prob < 1.0:
@@ -111,7 +115,7 @@ def conv1d_array(input, sizes, widths, keep_probs=None, w_wds=0.005, b_wds=0.000
         input = out
   return out
 
-def conv1d(input, sizes, widths, keep_probs=None, w_wds=0.005, b_wds=0.000,
+def conv1d(input, sizes, widths, strides=None, keep_probs=None, w_wds=0.005, b_wds=0.000,
                w_initializers=tf.truncated_normal_initializer(stddev=0.05),
                b_initializers=tf.truncated_normal_initializer(stddev=0.05),
                name="conv1d",
@@ -122,11 +126,14 @@ def conv1d(input, sizes, widths, keep_probs=None, w_wds=0.005, b_wds=0.000,
   w_initializer_list = expand_list(w_initializers, sizes)
   b_initializer_list = expand_list(b_initializers, sizes)
   input_size = input.get_shape().as_list()[-1]
+  if strides is None:
+    strides = 1
+  strides = expand_list(strides,sizes)
   print('conv1d: embedding_dimension = ' + str(input_size))
   outlist = []
   with tf.variable_scope(name):
-    for i, (width, size, w_wd, b_wd, keep_prob, w_initializer, b_initializer) in enumerate(
-            zip(widths, sizes, w_wd_list, b_wd_list, keep_prob_list, w_initializer_list, b_initializer_list)):
+    for i, (width, size, w_wd, b_wd, keep_prob, w_initializer, b_initializer, stride) in enumerate(
+            zip(widths, sizes, w_wd_list, b_wd_list, keep_prob_list, w_initializer_list, b_initializer_list, strides)):
       with tf.variable_scope('conv%s' % str(i)) as scope:
         w = variable_with_weight_decay('w', [width, input_size, size],
                                        initializer=w_initializer, wd=w_wd,vlist=vlistin)
@@ -136,13 +143,15 @@ def conv1d(input, sizes, widths, keep_probs=None, w_wds=0.005, b_wds=0.000,
                                        initializer=b_initializer, wd=b_wd,vlist=vlistin)
         if vlistout is not None:
           vlistout.append(b)
-        w_out = tf.nn.conv1d(input, w, 1, 'SAME')
+        print(w)
+        print(stride)
+        w_out = tf.nn.conv1d(input, w, stride, 'SAME')
         b_out = tf.nn.bias_add(w_out, b)
         out = tf.nn.relu(b_out)
         if keep_prob is not None and keep_prob < 1.0:
           [out],_ = core.dropout([out], keep_prob)
-        out.append(out)
-  return out
+        outlist.append(out)
+  return outlist
 
 def gated_linear_unit(input):
 	None
